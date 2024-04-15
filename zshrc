@@ -1,51 +1,72 @@
-# Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
 
-# Set name of the theme to load.
-# Look at https://github.com/robbyrussell/oh-my-zsh/wiki/themes for alternatives
+# You can change the theme with another one from https://github.com/robbyrussell/oh-my-zsh/wiki/themes
 ZSH_THEME="robbyrussell"
 
-# Uncomment following line if you want red dots to be displayed while waiting for completion
-COMPLETION_WAITING_DOTS="true"
+# Useful oh-my-zsh plugins for Le Wagon bootcamps
+plugins=(git gitfast last-working-dir common-aliases zsh-syntax-highlighting history-substring-search)
 
-# Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
-# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-plugins=(gitfast brew rbenv last-working-dir common-aliases sublime zsh-syntax-highlighting zsh-history-substring-search)
+# (macOS-only) Prevent Homebrew from reporting - https://github.com/Homebrew/brew/blob/master/docs/Analytics.md
+export HOMEBREW_NO_ANALYTICS=1
 
-source $ZSH/oh-my-zsh.sh
-export PATH='/usr/local/bin:/usr/local/share:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/share/npm/bin:/usr/X11/bin:/usr/texbin:~/bin'
+# Disable warning about insecure completion-dependent directories
+ZSH_DISABLE_COMPFIX=true
 
-# Disable zsh correction
-unsetopt correct_all
+# Actually load Oh-My-Zsh
+source "${ZSH}/oh-my-zsh.sh"
+unalias rm # No interactive rm by default (brought by plugins/common-aliases)
+unalias lt # we need `lt` for https://github.com/localtunnel/localtunnel
 
-# To use Homebrew's directories rather than ~/.rbenv
-export RBENV_ROOT=$HOME/.rbenv
-# if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
-export PATH="./bin:${RBENV_ROOT}/shims:${RBENV_ROOT}/bin:${PATH}"
+# Load rbenv if installed (to manage your Ruby versions)
+export PATH="${HOME}/.rbenv/bin:${PATH}" # Needed for Linux/WSL
+type -a rbenv > /dev/null && eval "$(rbenv init -)"
 
-# Gather handy aliases
+# Load pyenv (to manage your Python versions)
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)" && RPROMPT+='[🐍 $(pyenv version-name)]'
+
+# Load nvm (to manage your node versions)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Call `nvm use` automatically in a directory with a `.nvmrc` file
+autoload -U add-zsh-hook
+load-nvmrc() {
+  if nvm -v &> /dev/null; then
+    local node_version="$(nvm version)"
+    local nvmrc_path="$(nvm_find_nvmrc)"
+
+    if [ -n "$nvmrc_path" ]; then
+      local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+
+      if [ "$nvmrc_node_version" = "N/A" ]; then
+        nvm install
+      elif [ "$nvmrc_node_version" != "$node_version" ]; then
+        nvm use --silent
+      fi
+    elif [ "$node_version" != "$(nvm version default)" ]; then
+      nvm use default --silent
+    fi
+  fi
+}
+type -a nvm > /dev/null && add-zsh-hook chpwd load-nvmrc
+type -a nvm > /dev/null && load-nvmrc
+
+# Rails and Ruby uses the local `bin` folder to store binstubs.
+# So instead of running `bin/rails` like the doc says, just run `rails`
+# Same for `./node_modules/.bin` and nodejs
+export PATH="./bin:./node_modules/.bin:${PATH}:/usr/local/sbin"
+
+# Store your own aliases in the ~/.aliases file and load the here.
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 
-# Enhance history with substring search and purple highlighting
-bindkey '^[OA' history-substring-search-up
-bindkey '^[OB' history-substring-search-down
-
-# UTF-8 is our default encoding
+# Encoding stuff for the terminal
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
-export BUNDLER_EDITOR="subl $@ >/dev/null 2>&1"
-export BUNDLER_EDITOR="subl $@ >/dev/null 2>&1"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
-export BUNDLER_EDITOR="'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl'"
+
+export BUNDLER_EDITOR=code
+export EDITOR=code
+
+# Set ipdb as the default Python debugger
+export PYTHONBREAKPOINT=ipdb.set_trace
